@@ -1,0 +1,12 @@
+Download OSM from a region (Box)
+
+https://api.openstreetmap.org/api/0.6/map?bbox=11.54,48.14,11.543,48.145
+https://www.openstreetmap.org/export#map=7/39.237/116.455
+
+ left, bottom, right, top (min long, min lat, max long, max lat. 
+ Latitude and longitude are expressed in decimal degrees. 
+ North latitude is positive, south latitude is negative. 
+ West longitude is negative, east longitude is positive.
+ 
+ https://extract.bbbike.org/
+ https://planet.osm.org/

@@ -1,0 +1,190 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>uq.dke.traminer</groupId>
+  <artifactId>spark-map-matching</artifactId>
+  <version>0.1</version>
+  <packaging>jar</packaging>
+  <name>spark-map-matching</name>
+
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<java.version>1.8</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+		  <groupId>junit</groupId>
+		  <artifactId>junit</artifactId>
+		  <version>3.8.1</version>
+		  <scope>test</scope>
+		</dependency>
+	
+		<!-- Spark -->
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-core_2.10</artifactId>
+			<version>2.1.0</version>
+		</dependency> 
+		
+		<!-- Hadoop -->
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>2.7.3</version>
+		</dependency>
+	
+		<!-- Traminer util library --> 
+		<dependency>
+			<groupId>uq.dke.traminer</groupId>
+			<artifactId>traminer-util-lib</artifactId>
+			<version>0.1</version>
+		</dependency>
+
+		<!-- Traminer IO library --> 
+		<dependency>
+			<groupId>uq.dke.traminer</groupId>
+			<artifactId>traminer-io-lib</artifactId>
+			<version>0.1</version>
+		</dependency>	
+		
+		<!-- JTS Spatial Geometry Library -->
+		<dependency>
+			<groupId>com.vividsolutions</groupId>
+			<artifactId>jts</artifactId>
+			<version>1.13</version>
+		</dependency>
+		
+		<!-- Graph Library -->
+		<dependency>
+			<groupId>org.graphstream</groupId>
+			<artifactId>gs-core</artifactId>
+			<version>1.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.graphstream</groupId>
+			<artifactId>gs-algo</artifactId>
+			<version>1.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.graphstream</groupId>
+			<artifactId>gs-ui</artifactId>
+			<version>1.3</version>
+		</dependency>
+
+		<!-- XML parser -->
+		<dependency>
+			<groupId>org.jdom</groupId>
+			<artifactId>jdom</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.databricks</groupId>
+			<artifactId>spark-xml_2.10</artifactId>
+			<version>0.4.1</version>
+		</dependency>		
+	</dependencies>
+  
+	<build>
+		<!-- Add extra source folders -->	
+		<resources>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
+		
+		<!-- <pluginManagement> -->
+			<plugins>
+				<!-- Maven Java compiler -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.1</version>
+					<configuration>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
+					</configuration>
+				</plugin>
+				
+				<!-- Generate executable Jar -->
+				<plugin>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>2.4.3</version>
+					<executions>
+					  <execution>
+						<phase>package</phase>
+						<goals>
+						  <goal>shade</goal>
+						</goals>
+						<configuration>
+						  <transformers>
+							<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<mainClass>traminer.spark.mapmatching.gui.App</mainClass>
+								<manifestEntries>
+									<Main-Class>traminer.spark.mapmatching.gui.App</Main-Class>
+									<Build-Number>123</Build-Number>
+								</manifestEntries>
+							</transformer>
+						  </transformers>
+						  <!-- Invalid signature bug fix --> 
+						  <filters>
+							<filter>
+							  <artifact>*:*</artifact>
+							  <excludes>
+								<exclude>META-INF/*.SF</exclude>
+								<exclude>META-INF/*.DSA</exclude>
+								<exclude>META-INF/*.RSA</exclude>
+							  </excludes>
+							</filter>
+						  </filters>
+						</configuration>
+					  </execution>
+					</executions>
+				</plugin>
+
+				<!-- Add external libraries (jars in the lib folder) -->
+				<plugin>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>2.1</version>
+					<executions>
+					  <execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+						  <goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+						  <outputDirectory>${project.build.directory}/lib</outputDirectory>
+						  <overWriteReleases>false</overWriteReleases>
+						  <overWriteSnapshots>false</overWriteSnapshots>
+						  <overWriteIfNewer>true</overWriteIfNewer>
+						</configuration>
+					  </execution>
+					</executions>
+				</plugin>
+	  
+				<!-- Put all libraries/dependencies into the jar -->
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<configuration>
+					  <archive>
+						<manifest>
+						  <mainClass>traminer.spark.mapmatching.gui.App</mainClass>
+						</manifest>
+					  </archive>
+					  <descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					  </descriptorRefs>
+					</configuration>
+				</plugin>
+			</plugins>
+		<!-- </pluginManagement> -->
+	</build>
+</project>
