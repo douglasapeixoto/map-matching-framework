@@ -3,7 +3,6 @@ package traminer.spark.mapmatching.gui;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -31,6 +30,20 @@ public class MapMatchingSparkClient implements Serializable {
 	private final SparkParameters sparkParams;
 	private final MapMatchingParameters params;
 	
+	/** Number of copies of the input dataset to read */
+	private final int numDataCopies = 1;
+	
+String res = "";
+
+	/** Input trajectory data format */
+	private final String dataFormat = 		
+			"_OUTPUT_FORMAT	SPATIAL_TEMPORAL\n" +
+			"_COORD_SYSTEM	GEOGRAPHIC\n" +
+			"_DECIMAL_PREC	5\n" +
+			"_SPATIAL_DIM	2\n" +
+			"_ID			STRING\n" +
+			"_COORDINATES	ARRAY(_X DECIMAL _Y DECIMAL _TIME INTEGER)";
+	
 	/** App log */
 	private ObservableLog log = ObservableLog.instance();
 	
@@ -54,18 +67,6 @@ public class MapMatchingSparkClient implements Serializable {
 	 */
 	public void doMatching(String osmPath, String dataPath, String sampleDataPath, 
 			String outputDataPath, int numRDDPartitions) throws IOException {
-		// read trajectory data format
-		/*final String dataFormat = IOService.readResourcesFileContent(
-				"trajectory-data-format.tddf");
-		*/
-		final String dataFormat = 		
-				"_OUTPUT_FORMAT	SPATIAL_TEMPORAL\n" +
-				"_COORD_SYSTEM	GEOGRAPHIC\n" +
-				"_DECIMAL_PREC	5\n" +
-				"_SPATIAL_DIM	2\n" +
-				"_ID			STRING\n" +
-				"_COORDINATES	ARRAY(_X DECIMAL _Y DECIMAL _TIME INTEGER)";
-
 		// Build the extended Quadtree model
 		QuadTreeModelX quadModelX = getQuadModelX(sampleDataPath, dataFormat, numRDDPartitions);
 		
@@ -77,24 +78,69 @@ public class MapMatchingSparkClient implements Serializable {
 		JavaRDD<RoadNode> nodesRDD = readMapNodes(osmPath, numRDDPartitions);
 
 		// Read the paths to the data batches, each folder is a batch
-/*		List<String> batchPathList = IOService.getDirectoriesPathList(
+		List<String> batchPathList = IOService.getDirectoriesPathList(
 				Paths.get(dataPath));
-*/
-List<String> batchPathList =  new ArrayList<>();
-batchPathList.add(dataPath);
+
+		/*List<String> batchPathList =  new ArrayList<>();
+		batchPathList.add(dataPath);*/
+		
+		// Get the Java runtime
+        Runtime runtime = Runtime.getRuntime();
 		// Do the matching on each batch
+        int batchId = 1;
 		for (String batchPath : batchPathList) {
+			// Run the garbage collector
+	        runtime.gc();
+	        
 			JavaRDD<Trajectory> trajectoryBatchRDD = readTrajectoryBatch(
 					batchPath, dataFormat, numRDDPartitions);
 			// do the matching
 			JavaRDD<PointNodePair> resultMatchRDD = sparkMapMatching.doBatchMatching(
 					trajectoryBatchRDD, nodesRDD);
+
+long memory = runtime.totalMemory() - runtime.freeMemory();
+System.out.println("[MEMORY] Batch-"+batchId+" Memory Usage: " + memory + "bytes");
+res += "Batch-"+batchId+ ": " + memory + " bytes\n";
+batchId++;
 			
 			// save the results and unpersist
 			saveResults(resultMatchRDD, outputDataPath);
 			resultMatchRDD.unpersist();
 		}
 		log.finish("Batch Matching FINISHED!");
+		System.out.println("RESULTS: " + res);
+	}
+	
+	/**
+	 * 
+	 * @param osmPath
+	 * @param dataPath
+	 * @param outputDataPath
+	 * @param numRDDPartitions
+	 * 
+	 * @throws IOException
+	 */
+	public void doSerialMatching(String osmPath, String dataPath, String outputDataPath, 
+			int numRDDPartitions) throws IOException {
+		// Start the Spark map-matching service
+		MapMatchingSpark sparkMapMatching = new MapMatchingSpark( 
+		          sparkParams, mapMatching, null);		
+
+		// Read OSM data, Map nodes
+		JavaRDD<RoadNode> nodesRDD = readMapNodes(osmPath, numRDDPartitions);
+
+		// Read trajectory data
+		JavaRDD<Trajectory> trajectoryRDD = readTrajectoryBatch(
+				dataPath, dataFormat, numRDDPartitions);
+		
+		// do the matching
+		JavaRDD<PointNodePair> resultMatchRDD = sparkMapMatching
+				.doSerialMatching(trajectoryRDD, nodesRDD);
+		
+		// save the results
+		saveResults(resultMatchRDD, outputDataPath);
+
+		log.finish("Serial Matching FINISHED!");
 	}
 	
 	private JavaRDD<RoadNode> readMapNodes(String osmPath, int numRDDPartitions) {
@@ -134,7 +180,7 @@ batchPathList.add(dataPath);
 		log.info("**********");
 		log.info("Reading Trajectory Batch.");
 		JavaRDD<Trajectory> trajectoryBatchRDD = TrajectoryReader.readAsSparkRDD(
-				sparkParams, batchPath, dataFormat,	numRDDPartitions, false, 1);
+				sparkParams, batchPath, dataFormat,	numRDDPartitions, false, numDataCopies);
 		long count = trajectoryBatchRDD.count();
 		log.info("Read (" + count + ") Trajectories.");
   

@@ -68,7 +68,11 @@ public class MapMatchingSpark extends Observable implements Serializable {
 				SparkContextClient.getContextInstance(sparkParams));
 		// broadcast
 		this.matchingMethodBc = sc.broadcast(matchingMethod);
-		this.spatialModelBc   = sc.broadcast(spatialModelExt);
+		if (spatialModelExt != null) {
+			this.spatialModelBc = sc.broadcast(spatialModelExt);
+		} else {
+			this.spatialModelBc = null;
+		}
 	}
 
 	/**
@@ -168,6 +172,7 @@ public class MapMatchingSpark extends Observable implements Serializable {
 	 * 
 	 * @return A DStream containing the point-to-node match pairs.
 	 */
+	// TODO Future work, using Spark's DStream
 /*	public JavaDStream<PointNodePair> doStreamMatching(
 			JavaDStream<Trajectory> trajectoryDStream, 
 			JavaRDD<RoadNode> nodesRDD) {

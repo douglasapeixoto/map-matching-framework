@@ -22,10 +22,10 @@
                   <Label layoutX="26.0" layoutY="77.0" text="Map Data (OSM):" />
                   <Label layoutX="26.0" layoutY="141.0" text="Sample Data:" />
                   <Label layoutX="26.0" layoutY="206.0" text="Output Directory:" />
-                  <TextField fx:id="trajectoryDataTxt" layoutX="25.0" layoutY="37.0" prefHeight="31.0" prefWidth="400.0" text="E:\data\map-matching\data" />
-                  <TextField fx:id="mapDataTxt" layoutX="25.0" layoutY="101.0" prefHeight="31.0" prefWidth="325.0" text="E:\data\map-matching\map\map.osm" />
-                  <TextField fx:id="sampleDataTxt" layoutX="25.0" layoutY="165.0" prefHeight="31.0" prefWidth="400.0" text="E:\data\map-matching\sample" />
-                  <TextField fx:id="outputDataTxt" layoutX="25.0" layoutY="231.0" prefHeight="31.0" prefWidth="400.0" text="E:\data\map-matching\output" />
+                  <TextField fx:id="trajectoryDataTxt" layoutX="25.0" layoutY="37.0" prefHeight="31.0" prefWidth="400.0" text="E:\data\map-matching\beijing\data" />
+                  <TextField fx:id="mapDataTxt" layoutX="25.0" layoutY="101.0" prefHeight="31.0" prefWidth="325.0" text="E:\data\map-matching\beijing\map\beijing-map-nodes.osm" />
+                  <TextField fx:id="sampleDataTxt" layoutX="25.0" layoutY="165.0" prefHeight="31.0" prefWidth="400.0" text="E:\data\map-matching\beijing\sample" />
+                  <TextField fx:id="outputDataTxt" layoutX="25.0" layoutY="231.0" prefHeight="31.0" prefWidth="400.0" text="E:\data\map-matching\beijing\output" />
                   <Button fx:id="trajectoryDataBtn" layoutX="439.0" layoutY="37.0" mnemonicParsing="false" onAction="#actionOpenTrajectoryData" prefHeight="31.0" prefWidth="65.0" text="Open" />
                   <Button fx:id="mapDataBtn" layoutX="360.0" layoutY="101.0" mnemonicParsing="false" onAction="#actionOpenMapData" prefHeight="31.0" prefWidth="65.0" text="Open" />
                   <Button fx:id="sampleDataBtn" layoutX="439.0" layoutY="165.0" mnemonicParsing="false" onAction="#actionOpenSampleData" prefHeight="31.0" prefWidth="65.0" text="Open" />
@@ -41,16 +41,16 @@
       </TitledPane>
       <TitledPane collapsible="false" layoutX="539.0" layoutY="10.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="435.0" prefWidth="171.0" text="Partitioning Config.">
          <content>
-            <AnchorPane prefHeight="200.0" prefWidth="200.0">
+            <AnchorPane fx:id="partitioningPane" prefHeight="200.0" prefWidth="200.0">
                <children>
                   <Label layoutX="11.0" layoutY="24.0" text="MinX:" />
                   <Label layoutX="12.0" layoutY="210.0" text="MaxY:" />
                   <Label layoutX="11.0" layoutY="86.0" text="MinY:" />
                   <Label layoutX="11.0" layoutY="148.0" text="MaxX:" />
-                  <TextField fx:id="minXTxt" alignment="CENTER_RIGHT" layoutX="11.0" layoutY="45.0" prefHeight="31.0" prefWidth="130.0" text="116.07" />
-                  <TextField fx:id="minYTxt" alignment="CENTER_RIGHT" layoutX="11.0" layoutY="107.0" prefHeight="31.0" prefWidth="130.0" text="31.09" />
-                  <TextField fx:id="maxYTxt" alignment="CENTER_RIGHT" layoutX="12.0" layoutY="231.0" prefHeight="31.0" prefWidth="130.0" text="40.211" />
-                  <TextField fx:id="maxXTxt" alignment="CENTER_RIGHT" layoutX="11.0" layoutY="169.0" prefHeight="31.0" prefWidth="130.0" text="121.56" />
+                  <TextField fx:id="minXTxt" alignment="CENTER_RIGHT" layoutX="11.0" layoutY="45.0" prefHeight="31.0" prefWidth="130.0" text="115.47" />
+                  <TextField fx:id="minYTxt" alignment="CENTER_RIGHT" layoutX="11.0" layoutY="107.0" prefHeight="31.0" prefWidth="130.0" text="39.45" />
+                  <TextField fx:id="maxYTxt" alignment="CENTER_RIGHT" layoutX="12.0" layoutY="231.0" prefHeight="31.0" prefWidth="130.0" text="40.60" />
+                  <TextField fx:id="maxXTxt" alignment="CENTER_RIGHT" layoutX="11.0" layoutY="169.0" prefHeight="31.0" prefWidth="130.0" text="117.18" />
                   <Label layoutX="12.0" layoutY="284.0" text="Boundary Extension:" />
                   <TextField fx:id="boundaryExtTxt" alignment="CENTER_RIGHT" layoutX="12.0" layoutY="307.0" prefHeight="31.0" prefWidth="130.0" text="0.05" />
                   <Label layoutX="15.0" layoutY="349.0" text="Nodes Capacity:" />

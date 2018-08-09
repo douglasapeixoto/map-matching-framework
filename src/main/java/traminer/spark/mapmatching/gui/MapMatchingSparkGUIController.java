@@ -12,12 +12,15 @@ import java.util.ResourceBundle;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.DirectoryChooser;
@@ -41,6 +44,8 @@ public class MapMatchingSparkGUIController implements Initializable {
 	private Pane rootPane;
 	@FXML
 	private ChoiceBox<String> techniqueChoice;
+	@FXML
+	private AnchorPane partitioningPane;
 	@FXML
 	private TextArea logTxt;
 	
@@ -76,16 +81,13 @@ public class MapMatchingSparkGUIController implements Initializable {
 	/** Map-matching techniques */
 	private static final String POINT_TO_NODE = "POINT-TO-NODE";
 	private static final String POINT_TO_EDGE = "POINT-TO-EDGE";
+	private static final String SERIAL_NN = "SERIAL-NN";
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		log("Appplication Starts.");
 		
-		// feed choice box
-		techniqueChoice.getItems().add(POINT_TO_NODE);
-		techniqueChoice.getItems().add(POINT_TO_EDGE);
-		techniqueChoice.setValue(POINT_TO_NODE);
-
+		handleTechniqueChoice();
 		handleNumericField(numPartitionsTxt);
 		handleNumericField(minXTxt);
 		handleNumericField(minYTxt);
@@ -164,7 +166,7 @@ public class MapMatchingSparkGUIController implements Initializable {
 			} 
 		}
 	}
-
+	
 	@FXML
 	private void actionDoMatching() {
 		if (!validateFields()) {
@@ -172,6 +174,15 @@ public class MapMatchingSparkGUIController implements Initializable {
 			return;
 		}
 		
+		if (techniqueChoice.getValue().equals(SERIAL_NN)) {
+			runSerialMatching();
+		} else {
+			runBatchMathing();
+		}
+		log("Map-Matching Is Running!");
+	}
+
+	public void runBatchMathing() {
 		// Setup space partitioning parameters
 		MapMatchingParameters mapMatchingParams = null;
 		try {
@@ -197,7 +208,7 @@ public class MapMatchingSparkGUIController implements Initializable {
 		} else 
 		if (techniqueChoice.getValue().equals(POINT_TO_EDGE)) {
 			mapMatchingMethod = new PointToEdgeMatching();
-		} 
+		}
 		
 		// Setup spark parameters
 		SparkParameters sparkParams = new SparkParameters(
@@ -228,11 +239,44 @@ public class MapMatchingSparkGUIController implements Initializable {
 			}
 		};
 		// start this process in a separated thread
-		new Thread(process).start();
-
-		log("Map-Matching Is Running!");
+		new Thread(process).start();		
 	}
+	
+	public void runSerialMatching() {
+		// Setup map-matching algorithm
+		MapMatchingMethod mapMatchingMethod = new PointToNodeMatching();
+		
+		// Setup spark parameters
+		SparkParameters sparkParams = new SparkParameters(
+				sparkMasterTxt.getText(), "MapMatchingApp");
 
+		// do the matching
+		String osmPath = mapDataTxt.getText();
+		String dataPath = trajectoryDataTxt.getText();
+		String outputDataPath = outputDataTxt.getText();
+		int numRDDPartitions = Integer.parseInt(numPartitionsTxt.getText());
+		
+		MapMatchingSparkClient mapMatchingClient = new MapMatchingSparkClient(
+				mapMatchingMethod, sparkParams, null);
+		
+		// run map-matching process in a separated thread
+		Runnable process = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					mapMatchingClient.doSerialMatching(osmPath, dataPath, 
+							outputDataPath, numRDDPartitions);
+				} catch (IOException e) {
+					showErrorMessage("Path does not exist.");
+					e.printStackTrace();
+					return;
+				}
+			}
+		};
+		// start this process in a separated thread
+		new Thread(process).start();		
+	}
+	
 	/**
 	 * Force field to be numeric only
 	 * 
@@ -248,6 +292,26 @@ public class MapMatchingSparkGUIController implements Initializable {
 	            }
 	        }
 	    });	
+	}
+
+	private void handleTechniqueChoice() {
+		techniqueChoice.getItems().add(POINT_TO_NODE);
+		techniqueChoice.getItems().add(POINT_TO_EDGE);
+		techniqueChoice.getItems().add(SERIAL_NN);
+		techniqueChoice.setValue(POINT_TO_NODE);
+		
+		techniqueChoice.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				if (techniqueChoice.getValue().equals(SERIAL_NN)) {
+					sampleDataTxt.setDisable(true);
+					partitioningPane.setDisable(true);
+				} else {
+					sampleDataTxt.setDisable(false);
+					partitioningPane.setDisable(false);
+				}
+			}
+		});
 	}
 	
 	/**
